@@ -2,7 +2,8 @@ import numpy as np
 from kivy.app import App
 
 from kivy.uix.widget import Widget
-from kivy.properties import ObjectProperty, NumericProperty, ReferenceListProperty
+from kivy.properties import BooleanProperty, NumericProperty, ListProperty
+from kivy.properties import ObjectProperty
 
 from kivy.uix.scatter import Scatter
 from kivy.uix.label import Label
@@ -17,40 +18,92 @@ from kivy.clock import Clock
 
 
 class FboTest(Widget):
-    buffer_size_x = NumericProperty(800)
-    buffer_size_y = NumericProperty(600)
-    buffer_size = ReferenceListProperty(buffer_size_x, buffer_size_y)
+
+    power_of_two_only = BooleanProperty(True)
+    keep_aspect_ratio = BooleanProperty(True)
+    aspect_ratio = NumericProperty(16 / 9)
+
+    min_buffer_size_x = NumericProperty(1)     # 2**0
+    min_buffer_size_y = NumericProperty(1)     # 2**0
+    max_buffer_size_x = NumericProperty(8192)  # 2**12
+    max_buffer_size_y = NumericProperty(8192)  # 2**12
+
+    buffer_size = ListProperty([640, 480])
+    buffer = None
+
     texture = ObjectProperty(None, allownone=True)
-    data_texture = ObjectProperty(None, allownone=True)
+    data_texture = None
     viewport = ObjectProperty(None, allownone=True)
 
     def __init__(self, **kwargs):
         super(FboTest, self).__init__(**kwargs)
-        # self.canvas = Canvas()
-        print(self.buffer_size_x)
+        self.init_buffer()
+
         with self.canvas:
             self.fbo = Fbo(size=self.size)
             self.fbo_color = Color(1, 1, 1, 1)
             self.fbo_rect = Rectangle()
             self.fbo.add_reload_observer(self.populate_fbo)
 
-        self.data_texture = Texture.create(size=(self.buffer_size_x, self.buffer_size_y), colorfmt='luminance', bufferfmt='float', mipmap=True)
-        self.data_texture.min_filter = 'nearest'
-        self.data_texture.mag_filter = 'nearest'
-
-        buffer_size = int(self.buffer_size_x * self.buffer_size_y)
-        self.buffer = np.random.random(size=buffer_size).astype('float32')
-
         self.update_data_texture()
-
-        # and load the data now.
         self.populate_fbo(self.fbo)
 
         self.texture = self.fbo.texture
 
+    def on_min_buffer_size_x(self, instance, value):
+        pass
+
+    def init_buffer(self):
+        buffer_size = int(self.buffer_size[0] * self.buffer_size[1])
+        self.buffer = np.zeros(buffer_size, dtype='float32')
+        self.data_texture = Texture.create(size=(self.buffer_size[0], self.buffer_size[1]), colorfmt='luminance',
+                                           bufferfmt='float', mipmap=True)
+        self.data_texture.min_filter = 'nearest'
+        self.data_texture.mag_filter = 'nearest'
+        self.update_data_texture()
+
+    def coerce_buffer_size(self, buffer_size):
+        x, y = buffer_size
+        if x < self.min_buffer_size_x:
+            x = self.min_buffer_size_x
+        elif x > self.max_buffer_size_x:
+            x = self.max_buffer_size_x
+        if y < self.min_buffer_size_y:
+            y = self.min_buffer_size_y
+        elif y > self.max_buffer_size_y:
+            y = self.max_buffer_size_y
+        return x, y
+
+    def apply_aspect_ratio(self, buffer_size):
+        x, y = buffer_size
+        if self.keep_aspect_ratio:
+            if x / self.aspect_ratio > self.max_buffer_size_y:
+                y = self.max_buffer_size_y
+                x = int(y * self.aspect_ratio)
+            else:
+                y = int(x / self.aspect_ratio)
+        else:
+            self.aspect_ratio = x / y
+        x, y = self.coerce_buffer_size([x, y])
+        return x, y
+
+    def on_buffer_size(self, instance, value):
+        print('New buffer size is', value)
+        x, y = self.coerce_buffer_size(value)
+        x, y = self.apply_aspect_ratio([x, y])
+        if not [x, y] == value:
+            self.buffer_size = [x, y]
+        self.init_buffer()
+        self.update_viewport()
+
+    def on_aspect_ratio(self, instance, value):
+        x, y = self.apply_aspect_ratio(self.buffer_size)
+        print('New aspect ratio is', value, 'actual aspect ratio is', x / y)
+        if not [x, y] == value:
+            self.buffer_size = [x, y]
 
     def gen_buffer(self):
-        buffer_size = int(self.buffer_size_x * self.buffer_size_y)
+        buffer_size = int(self.buffer_size[0] * self.buffer_size[1])
         self.buffer = np.random.random(size=buffer_size).astype('float32')
         self.update_data_texture()
         self.update_viewport()

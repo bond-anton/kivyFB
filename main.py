@@ -17,8 +17,8 @@ from kivy.clock import Clock
 
 
 class FboTest(Widget):
-    buffer_size_x = NumericProperty(1280)
-    buffer_size_y = NumericProperty(640)
+    buffer_size_x = NumericProperty(800)
+    buffer_size_y = NumericProperty(600)
     buffer_size = ReferenceListProperty(buffer_size_x, buffer_size_y)
     texture = ObjectProperty(None, allownone=True)
     data_texture = ObjectProperty(None, allownone=True)
@@ -27,6 +27,7 @@ class FboTest(Widget):
     def __init__(self, **kwargs):
         super(FboTest, self).__init__(**kwargs)
         # self.canvas = Canvas()
+        print(self.buffer_size_x)
         with self.canvas:
             self.fbo = Fbo(size=self.size)
             self.fbo_color = Color(1, 1, 1, 1)
@@ -69,8 +70,6 @@ class FboTest(Widget):
             ClearBuffers()
             Color(1, 1, 1, 1)
             self.viewport = Rectangle(size=self.size, pos=(0, 0), texture=self.data_texture)
-            Color(1, 0, 0, 1)
-            Line(rectangle=(0, 0, self.size[0] - 1, self.size[1] - 1))
 
     def on_size(self, instance, value):
         if 0 in value:

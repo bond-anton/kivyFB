@@ -2,14 +2,19 @@
 
 <BoxWidget>:
     viewport: viewport
+    fps_label: fps_label
     orientation: 'vertical'
-    TextInput:
-        id: my_textinput
-        font_size: 150
+    Label:
+        id: fps_label
+        font_size: 100
         size_hint_y: None
-        height: 200
+        height: 100
         text: 'default'
     FboTest:
         id: viewport
-        buffer_size: [64, 64]
-        aspect_ratio: 3/4
+        buffer_size: [1024, 512]
+        aspect_ratio: 4/2.5
+        min_buffer_size_x: 1
+        max_buffer_size_x: 8192
+        min_buffer_size_y: 1
+        max_buffer_size_y: 8192

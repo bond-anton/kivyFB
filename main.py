@@ -3,7 +3,7 @@ import numpy as np
 import time
 
 from kivy.app import App
-
+from kivy.core.window import Window
 from kivy.uix.widget import Widget
 from kivy.properties import BooleanProperty, NumericProperty, ListProperty
 from kivy.properties import ObjectProperty
@@ -46,6 +46,7 @@ class FboTest(Widget):
 
     buffer_size = ListProperty([640, 480])
     buffer = None
+    cache = None
 
     texture = ObjectProperty(None, allownone=True)
     data_texture = None
@@ -151,7 +152,8 @@ class FboTest(Widget):
 
     def init_buffer(self):
         buffer_size = int(self.buffer_size[0] * self.buffer_size[1])
-        self.buffer = np.zeros(buffer_size, dtype='float32')
+        # self.buffer = np.zeros(buffer_size, dtype='float32')
+        self.buffer = FrameBuffer(self.buffer_size[0], self.buffer_size[1])
         self.data_texture = Texture.create(size=(self.buffer_size[0], self.buffer_size[1]), colorfmt='luminance',
                                            bufferfmt='float', mipmap=True)
         self.data_texture.min_filter = 'nearest'
@@ -203,23 +205,27 @@ class FboTest(Widget):
 
     def gen_buffer(self):
         t0 = time.time()
-        buffer_size = 1
+        print('gen_buffer t0', t0)
+        # buffer_size = 1
         buffer_size = self.buffer_size[0]
         # self.buffer = np.random.random(size=self.buffer_size[0] * self.buffer_size[1]).astype('float32')
         self.buffer = np.random.random(size=buffer_size).astype('float32')
         # self.buffer = np.array([self.idx / (self.buffer_size[0] * self.buffer_size[1])], dtype='float32')
         i = int(self.idx % self.buffer_size[0])
         j = int(self.buffer_size[1] - self.idx // self.buffer_size[0] - 1)
+        print('gen_buffer i,j', i, j)
         # self.buffer = np.array([i / self.buffer_size[0] + (self.buffer_size[1] - j - 1) / self.buffer_size[1]], dtype='float32')
         # self.idx += 1
         self.idx += buffer_size
         if self.idx == self.buffer_size[0] * self.buffer_size[1]:
             self.idx = 0
         t1 = time.time()
+        print('gen_buffer t1', t1)
         # self.update_data_texture(size=(1, 1), pos=(i, j))
         self.update_data_texture(size=(buffer_size, 1), pos=(i, j))
         # self.update_data_texture()
         t2 = time.time()
+        print('gen_buffer t2', t2)
         self.update_viewer()
         t3 = time.time()
         # print((t1-t0)*1000, (t2-t1)*1000, (t3-t2)*1000, (t3-t0)*1000)
@@ -234,12 +240,19 @@ class FboTest(Widget):
         #     pass
 
     def update_data_texture(self, size=None, pos=(0, 0)):
+        print('update_data_texture entered')
         if size is None:
             size = self.buffer_size
+        print('update_data_texture size', size)
+        print('update_data_texture pos', pos)
         try:
-            self.data_texture.blit_buffer(self.buffer, size=size, pos=pos,
-                                          colorfmt='luminance', bufferfmt='float')
-        except IndexError:
+            print('update_data_texture blit_buffer', self.buffer)
+            print(self.data_texture)
+            # self.data_texture.blit_buffer(self.buffer, size=size, pos=pos,
+            #                               colorfmt='luminance', bufferfmt='float')
+            print('update_data_texture blit_buffer done')
+        except IndexError as e:
+            print('update_data_texture IndexError', e)
             pass
 
     def update_viewer(self):
@@ -286,29 +299,38 @@ class BoxWidget(BoxLayout):
     d_fps = 0
 
     def update(self, dt):
+        self.fps_label.text = 'XXX'
         self.viewport.gen_buffer()
-        try:
-            self.fps = int(mean(self.viewport.fps_meter.framebuffer))
-            self.d_fps = int(stdev(self.viewport.fps_meter.framebuffer))
-            self.fps_label.text = '%i +- %i fps' % (self.fps, self.d_fps)
-        except StatisticsError:
-            pass
+        # try:
+        #     self.fps = int(mean(self.viewport.fps_meter.framebuffer))
+        #     self.d_fps = int(stdev(self.viewport.fps_meter.framebuffer))
+        #     self.fps_label.text = '%i +- %i fps' % (self.fps, self.d_fps)
+        # except StatisticsError:
+        #     pass
 
 
 class FBViewApp(App):
 
-    def build(self):
-        ui = BoxWidget()
-        Clock.schedule_interval(ui.update, 1/20)
+    sas = None
 
-        thread1 = SAS(1, 'Thread-1', 10)
-        thread2 = SAS(2, 'Thread-2', 20)
+    def build(self):
+        Window.bind(on_request_close=self.on_request_close)
+        ui = BoxWidget()
+        # Clock.schedule_interval(ui.update, 1/20)
+
+        self.sas = SAS(1, 'SAS', 100, ui=ui)
 
         # Start new Threads
-        thread1.start()
-        thread2.start()
+        self.sas.start()
 
         return ui
+
+    def on_request_close(self, *args):
+        self.sas.exit_flag = True
+        while not self.sas.stopped:
+            time.sleep(1)
+        self.stop()
+        return True
 
 
 if __name__ == "__main__":

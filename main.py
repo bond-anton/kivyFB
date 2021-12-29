@@ -19,8 +19,9 @@ from kivy.graphics import Line, Rectangle
 from kivy.graphics.texture import Texture
 from kivy.clock import Clock
 
-from FrameBuffer import FrameBuffer
 from statistics import mean, stdev, StatisticsError
+from FrameBuffer import FrameBuffer
+from SAS import SAS
 
 
 def coerce_power_of_two(value):
@@ -295,9 +296,18 @@ class BoxWidget(BoxLayout):
 
 
 class FBViewApp(App):
+
     def build(self):
         ui = BoxWidget()
         Clock.schedule_interval(ui.update, 1/20)
+
+        thread1 = SAS(1, 'Thread-1', 10)
+        thread2 = SAS(2, 'Thread-2', 20)
+
+        # Start new Threads
+        thread1.start()
+        thread2.start()
+
         return ui
 
 

@@ -1,31 +1,35 @@
+from datetime import datetime, timedelta
+
+from kivy.uix.boxlayout import BoxLayout
+from kivy.clock import Clock
 from kivymd.app import MDApp
-from kivymd.theming import ThemeManager
 
 from front_panel_view import FrontPanelView
+from status_bar import StatusBar
+
+
+class DisplayBox(BoxLayout):
+    pass
 
 
 class MainApp(MDApp):
 
-    theme_cls = ThemeManager()
+    def build(self):
+        self.now = datetime.now()
+        ui = DisplayBox()
+        Clock.schedule_interval(self.update_clock, 1)
+        return ui
 
-    # def build(self):
-    #     Window.bind(on_request_close=self.on_request_close)
-    #     ui = BoxWidget()
-    #     # Clock.schedule_interval(ui.update, 1/20)
-    #
-    #     self.sas = SAS(1, 'SAS', 100, ui=ui)
-    #
-    #     # Start new Threads
-    #     self.sas.start()
-    #
-    #     return ui
-    #
-    # def on_request_close(self, *args):
-    #     self.sas.exit_flag = True
-    #     while not self.sas.stopped:
-    #         time.sleep(1)
-    #     self.stop()
-    #     return True
+    def on_start(self):
+        self.theme_cls.primary_palette = 'BlueGray'
+
+    def update_clock(self, *args):
+        # self.now = self.now + timedelta(seconds=1)
+        self.now = datetime.now()
+        self.root.ids.status_bar.ids.time_label.text = self.now.strftime('%H:%M:%S')
+
+    def set_screen(self, screen_name):
+        self.root.ids.front_panel_view.ids.screen_manager.current = screen_name
 
 
 if __name__ == "__main__":

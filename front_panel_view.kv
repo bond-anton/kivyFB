@@ -1,15 +1,23 @@
-<FrontPanelView>:
+#:include screen_view.kv
+#:include connection_content.kv
+
+<FrontPanelView@BoxLayout>:
     ScreenManager:
         id: screen_manager
-        Screen:
-            name: "home_screen"
-            MDLabel:
-                text: "VERBA C156R"
-        Screen:
-            name: "process_screen"
-            MDLabel:
-                text: "Process"
-        Screen:
-            name: "vacuum_screen"
-            MDLabel:
-                text: "Vacuum"
+        MDScreen:
+            name: 'connection_screen'
+            ScrollView:
+                ScreenView:
+                    title: 'Connection Setup'
+                    ConnectionContent:
+                        id: connection_setup
+        MDScreen:
+            name: 'process_screen'
+            ScrollView:
+                MDLabel:
+                    text: 'Process'
+        MDScreen:
+            name: 'vacuum_screen'
+            ScrollView:
+                MDLabel:
+                    text: 'Vacuum'

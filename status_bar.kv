@@ -1,6 +1,10 @@
-<StatusBar>:
-    md_bg_color: app.theme_cls.primary_color
+<MyStatusBar@MDToolbar>:
+    name: 'Status Bar'
     height: 32
-    MDLabel:
-        id: time_label
-        text: 'xxx'
+    md_bg_color: app.theme_cls.primary_color
+    title: 'time'
+    MDProgressBar:
+        id: progress_lower
+        min: 0
+        max: 100
+        value: 10

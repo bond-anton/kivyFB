@@ -1,0 +1,98 @@
+#:import MDDropdownMenu kivymd.uix.menu.MDDropdownMenu
+
+<ConnectionContent@StackLayout>:
+
+
+    name: 'Connection Setup'
+    #orientation: 'vertical'
+    #adaptive_height: True
+    pos_hint: {"center_x": .5, "center_y": .5}
+    spacing: dp(50)
+    padding: dp(10)
+
+    MDGridLayout:
+        cols: 5
+        rows: 2
+        spacing: dp(20)
+        padding: dp(10)
+        adaptive_height: True
+        canvas.before:
+            Color:
+                rgba: .5, .5, .5, 1
+            Line:
+                width: 2
+                rectangle: self.x, self.y, self.width, self.height
+        MDLabel:
+            text: 'Baud rate'
+            font_style: 'Body1'
+            theme_text_color: 'Hint'
+        MDLabel:
+            text: 'Data bits'
+            font_style: 'Body1'
+            theme_text_color: 'Hint'
+        MDLabel:
+            text: 'Flow control'
+            font_style: 'Body1'
+            theme_text_color: 'Hint'
+        MDLabel:
+            text: 'Stop bits'
+            font_style: 'Body1'
+            theme_text_color: 'Hint'
+        MDLabel:
+            text: 'Parity'
+            font_style: 'Body1'
+            theme_text_color: 'Hint'
+
+
+    MDBoxLayout:
+        adaptive_height: True
+        ConnectionSelectorRadioButton:
+            group: 'connection_type_selector'
+            text: 'Serial Port'
+            name: 'serial'
+            active: True
+
+        MDDropDownItem:
+            id: serial_port_dropdown
+            pos_hint: {'center_y': 0.5}
+            on_release: app.serial_port_menu.open()
+
+    MDBoxLayout:
+        adaptive_height: True
+        ConnectionSelectorRadioButton:
+            group: 'connection_type_selector'
+            text: 'TCP/IP Network'
+            name: 'network'
+            active: False
+
+        MDGridLayout:
+            cols: 2
+            rows: 1
+            spacing: dp(20)
+            padding: dp(10)
+            adaptive_height: True
+            #pos_hint: {"x": 0.1}
+            MDTextField:
+                hint_text: "Host"
+            MDTextField:
+                hint_text: "Port"
+
+<ConnectionSelectorRadioButton@MDGridLayout>:
+    cols: 2
+    text: ''
+    group: ''
+    name: ''
+    adaptive_height: True
+    adaptive_width: True
+    active: True
+    disabled: False
+    MDCheckbox:
+        size_hint: None, None
+        group: root.group
+        name: root.name
+        active: root.active
+        on_active: app.on_select_connection(*args)
+        allow_no_selection: False
+    MDLabel:
+        size_hint: None, None
+        text: root.text
